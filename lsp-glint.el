@@ -61,6 +61,8 @@
                    (with-lsp-workspace workspace
                      (lsp--set-configuration
                       `(:languageId "typescript"))))))
+
+(add-to-list 'lsp-language-id-configuration '(glint-ts-mode . "typescript"))
 ;; ---------------------------------------------------------------------
 ;; Disable TypeScript LSP in Glint buffers
 ;; ---------------------------------------------------------------------
