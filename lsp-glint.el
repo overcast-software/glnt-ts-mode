@@ -50,15 +50,17 @@
 
 ;;;###autoload
 (lsp-register-client
- (make-lsp-client
-  :new-connection (lsp-stdio-connection #'lsp-glint--server-command)
-  :major-modes '(glint-ts-mode)
-  :priority 10
-  :server-id 'glint
-  :multi-root t
-  ;; Glint behaves as TypeScript at the protocol level
-  :language-id-fn (lambda (_mode) "typescript")))
-
+(make-lsp-client
+ :new-connection (lsp-stdio-connection #'lsp-glint--server-command)
+ :major-modes '(glint-ts-mode)
+ :priority 10
+ :server-id 'glint
+ :multi-root t
+ :initialized-fn (lambda (workspace)
+                   ;; tell the server this is TypeScript
+                   (with-lsp-workspace workspace
+                     (lsp--set-configuration
+                      `(:languageId "typescript"))))))
 ;; ---------------------------------------------------------------------
 ;; Disable TypeScript LSP in Glint buffers
 ;; ---------------------------------------------------------------------
