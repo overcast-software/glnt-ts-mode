@@ -1,24 +1,26 @@
-;;; lsp-glint.el --- LSP support for Ember Glint -*- lexical-binding: t -*-
+;;; lsp-glint.el --- LSP support for Ember Glint -*- lexical-binding: t; -*-
 
 ;; Author: Doug Headley <doug@dougheadley.com>
 ;; Keywords: languages, tools, lsp, ember, glint
 ;; Package-Requires: ((emacs "30.1") (lsp-mode "9.0"))
 ;; Version: 0.1.0
-;; URL: https://github.com/overcast-software/lsp-glint
+;; URL: https://github.com/overcast-software/glint-ts-mode
 
 ;;; Commentary:
-;; LSP support for Ember Glint (.gts/.gjs) files.
+;; LSP support for Ember Glint (.gts/.gjs) files using glint-language-server.
 
 ;;; Code:
 
 (require 'lsp-mode)
-(require 'glint-mode)
+(require 'glint-ts-mode)
 
 (defgroup lsp-glint nil
   "LSP support for Ember Glint."
   :group 'lsp-mode)
 
-;; ---------------- Root detection ----------------
+;; ---------------------------------------------------------------------
+;; Project root detection
+;; ---------------------------------------------------------------------
 
 (defun lsp-glint--project-root ()
   "Return project root directory for Glint."
@@ -27,7 +29,9 @@
       (locate-dominating-file default-directory "package.json")
       (lsp-workspace-root)))
 
-;; ---------------- Server command ----------------
+;; ---------------------------------------------------------------------
+;; Language server command resolution
+;; ---------------------------------------------------------------------
 
 (defun lsp-glint--server-command ()
   "Return the command to start glint-language-server."
@@ -40,29 +44,39 @@
                (t (error "glint-language-server not found")))))
     (list cmd "--stdio")))
 
-;; ---------------- Register LSP client ----------------
+;; ---------------------------------------------------------------------
+;; LSP client registration
+;; ---------------------------------------------------------------------
 
 ;;;###autoload
 (lsp-register-client
  (make-lsp-client
   :new-connection (lsp-stdio-connection #'lsp-glint--server-command)
-  :major-modes '(glint-mode)
+  :major-modes '(glint-ts-mode)
   :priority 10
   :server-id 'glint
-  :multi-root t))
+  :multi-root t
+  ;; Glint behaves as TypeScript at the protocol level
+  :language-id-fn (lambda (_mode) "typescript")))
 
-;; ---------------- Disable ts-ls in Glint buffers ----------------
+;; ---------------------------------------------------------------------
+;; Disable TypeScript LSP in Glint buffers
+;; ---------------------------------------------------------------------
 
 (defun lsp-glint--disable-ts-ls ()
   "Disable TypeScript LSP in Glint buffers."
-  (setq-local lsp-disabled-clients '(ts-ls)))
+  (setq-local lsp-disabled-clients
+              (append lsp-disabled-clients '(ts-ls))))
 
-;; ---------------- Auto-start LSP ----------------
+;; ---------------------------------------------------------------------
+;; Auto-start hooks
+;; ---------------------------------------------------------------------
 
 ;;;###autoload
-(add-hook 'glint-mode-hook #'lsp-glint--disable-ts-ls)
+(add-hook 'glint-ts-mode-hook #'lsp-glint--disable-ts-ls)
+
 ;;;###autoload
-(add-hook 'glint-mode-hook #'lsp-deferred)
+(add-hook 'glint-ts-mode-hook #'lsp-deferred)
 
 (provide 'lsp-glint)
 ;;; lsp-glint.el ends here
